@@ -47,6 +47,13 @@ Implement a robust person-tracking system using a network of overhead cameras to
 python3 deep.py --input1 5.mp4 --input2 6.mp4 --embedder mobilenet --model fasterrcnn_resnet50_fpn_v2
 ```
 
-## Output Video
+## Output
+### Images-
+![](https://github.com/Patil-Vinay/Computer_Vision_2k23_National_Hackathon/blob/main/Round%203/Crowd%20Management%20using%20Yolov8/Dashboard%20UI.png)
 
+![](https://github.com/Patil-Vinay/Computer_Vision_2k23_National_Hackathon/blob/main/Round%203/Crowd%20Management%20using%20Yolov8/Security%20Dashboard%20UI.png)
+
+![](https://github.com/Patil-Vinay/Computer_Vision_2k23_National_Hackathon/blob/main/Round%203/Crowd%20Management%20using%20Yolov8/Analytics%20UI.png)
+
+### Video-
 [![Watch the video](https://img.youtube.com/vi/AMzIEpD2tVQ/maxresdefault.jpg)](https://youtu.be/AMzIEpD2tVQ)
