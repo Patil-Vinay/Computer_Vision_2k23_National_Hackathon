@@ -43,4 +43,4 @@ Compiling the model with an optimizer (Adam), loss function (categorical cross-e
 
 ## Output:
 
-[![Watch the video](https://img.youtube.com/vi/u81EbmLMxCU/maxresdefault.jpg)](https://youtu.be/J_R62BGdNVM)
+[![Watch the video](https://img.youtube.com/vi/J_R62BGdNVM/maxresdefault.jpg)](https://youtu.be/J_R62BGdNVM)
