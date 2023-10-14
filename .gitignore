@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+venv/
+.ipynb_checkpoints/
+
+# files written while the apps run
+Round 3/REID/outputs/
+runs/
