@@ -15,15 +15,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--input1',  # Input for the first video
     required=True,
-    help='path to the first input video',
+    help='path to the first input video or a webcam index like 0',
 )
 parser.add_argument(
     '--input2',  # Input for the second video
     required=True,
-    help='path to the second input video',
+    help='path to the second input video or a webcam index like 1',
 )
 parser.add_argument(
-    '--imgsz', 
+    '--imgsz',
     default=None,
     help='image resize, 640 will resize images to 640x640',
     type=int
@@ -66,11 +66,16 @@ parser.add_argument(
     ]
 )
 parser.add_argument(
-    '--cls', 
+    '--cls',
     nargs='+',
     default=[1],
     help='which classes to track',
     type=int
+)
+parser.add_argument(
+    '--no-show',
+    action='store_true',
+    help='do not open preview windows, only save the output videos'
 )
 args = parser.parse_args()
 
@@ -91,139 +96,98 @@ model = getattr(torchvision.models.detection, args.model)(weights='DEFAULT')
 # Set model to evaluation mode.
 model.eval().to(device)
 
-# Initialize SORT tracker objects for each video.
+
+def open_source(source):
+    # a plain number means a webcam index
+    cap = cv2.VideoCapture(int(source) if source.isdigit() else source)
+    if not cap.isOpened():
+        raise SystemExit(f"Could not open {source}")
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    save_name = os.path.splitext(os.path.basename(source))[0]
+    out = cv2.VideoWriter(
+        f"{OUT_DIR}/{save_name}_{args.model}_{args.embedder}.mp4",
+        cv2.VideoWriter_fourcc(*'mp4v'), fps,
+        (width, height)
+    )
+    return cap, out, width, height, frames
+
+
+def track_frame(frame, tracker, width, height):
+    start_time = time.time()
+    if args.imgsz is not None:
+        resized_frame = cv2.resize(
+            cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
+            (args.imgsz, args.imgsz)
+        )
+    else:
+        resized_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame_tensor = ToTensor()(resized_frame).to(device)
+
+    with torch.no_grad():
+        detections = model([frame_tensor])[0]
+
+    detections = convert_detections(detections, args.threshold, args.cls)
+    # boxes are in resized frame coords, so the embedder gets the resized frame too
+    tracks = tracker.update_tracks(
+        detections, frame=cv2.cvtColor(resized_frame, cv2.COLOR_RGB2BGR))
+    fps = 1 / (time.time() - start_time)
+
+    if len(tracks) > 0:
+        frame = annotate(tracks, frame, resized_frame, width, height, COLORS)
+
+    cv2.putText(
+        frame,
+        f"FPS: {fps:.1f}",
+        (int(20), int(40)),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=1,
+        color=(0, 0, 255),
+        thickness=2,
+        lineType=cv2.LINE_AA
+    )
+    return frame, fps
+
+
+# One tracker per camera so the IDs don't mix.
 tracker1 = DeepSort(max_age=30, embedder=args.embedder)
 tracker2 = DeepSort(max_age=30, embedder=args.embedder)
 
-VIDEO_PATH1 = args.input1
-cap1 = cv2.VideoCapture(0)
-frame_width1 = int(cap1.get(3))
-frame_height1 = int(cap1.get(4))
-frame_fps1 = int(cap1.get(5))
-frames1 = int(cap1.get(cv2.CAP_PROP_FRAME_COUNT))
-save_name1 = VIDEO_PATH1.split(os.path.sep)[-1].split('.')[0]
-out1 = cv2.VideoWriter(
-    f"{OUT_DIR}/{save_name1}_{args.model}_{args.embedder}.mp4", 
-    cv2.VideoWriter_fourcc(*'mp4v'), frame_fps1, 
-    (frame_width1, frame_height1)
-)
-
-VIDEO_PATH2 = args.input2
-cap2 = cv2.VideoCapture(2)
-frame_width2 = int(cap2.get(3))
-frame_height2 = int(cap2.get(4))
-frame_fps2 = int(cap2.get(5))
-frames2 = int(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
-save_name2 = VIDEO_PATH2.split(os.path.sep)[-1].split('.')[0]
-out2 = cv2.VideoWriter(
-    f"{OUT_DIR}/{save_name2}_{args.model}_{args.embedder}.mp4", 
-    cv2.VideoWriter_fourcc(*'mp4v'), frame_fps2, 
-    (frame_width2, frame_height2)
-)
+cap1, out1, frame_width1, frame_height1, frames1 = open_source(args.input1)
+cap2, out2, frame_width2, frame_height2, frames2 = open_source(args.input2)
 
 frame_count1 = 0
 frame_count2 = 0
 
 while True:
-    start_time1 = time.time()
-    start_time2 = time.time()
-    args.imgsz = 256
     ret1, frame1 = cap1.read()
     ret2, frame2 = cap2.read()
-    
+
+    # stop once both videos have ended
+    if not ret1 and not ret2:
+        break
+
     if ret1:
-        # Process and display frame1
-        if args.imgsz is not None:
-            resized_frame1 = cv2.resize(
-                cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB), 
-                (args.imgsz, args.imgsz)
-            )
-        else:
-            resized_frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
-        frame_tensor1 = ToTensor()(resized_frame1).to(device)
-        
-        with torch.no_grad():
-            detections1 = model([frame_tensor1])[0]
-        
-        detections1 = convert_detections(detections1, args.threshold, args.cls)
-        tracks1 = tracker1.update_tracks(detections1, frame=frame1)
-        
-        fps1 = 1 / (time.time() - start_time1)
+        frame1, fps1 = track_frame(frame1, tracker1, frame_width1, frame_height1)
         frame_count1 += 1
-        
-        print(f"Video 1 - Frame {frame_count1}/{frames1}", 
+        print(f"Video 1 - Frame {frame_count1}/{frames1}",
               f"Detection FPS: {fps1:.1f}")
-        
-        if len(tracks1) > 0:
-            frame1 = annotate(
-                tracks1, 
-                frame1, 
-                resized_frame1,
-                frame_width1,
-                frame_height1,
-                COLORS
-            )
-        
-        cv2.putText(
-            frame1,
-            f"FPS: {fps1:.1f}",
-            (int(20), int(40)),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(0, 0, 255),
-            thickness=2,
-            lineType=cv2.LINE_AA
-        )
         out1.write(frame1)
-        cv2.imshow("Video 1 Output", frame1)
+        if not args.no_show:
+            cv2.imshow("Video 1 Output", frame1)
 
     if ret2:
-        # Process and display frame2
-        if args.imgsz is not None:
-            resized_frame2 = cv2.resize(
-                cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB), 
-                (args.imgsz, args.imgsz)
-            )
-        else:
-            resized_frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
-        frame_tensor2 = ToTensor()(resized_frame2).to(device)
-        
-        with torch.no_grad():
-            detections2 = model([frame_tensor2])[0]
-        
-        detections2 = convert_detections(detections2, args.threshold, args.cls)
-        tracks2 = tracker2.update_tracks(detections2, frame=frame2)
-        
-        fps2 = 1 / (time.time() - start_time2)
+        frame2, fps2 = track_frame(frame2, tracker2, frame_width2, frame_height2)
         frame_count2 += 1
-        
-        print(f"Video 2 - Frame {frame_count2}/{frames2}", 
+        print(f"Video 2 - Frame {frame_count2}/{frames2}",
               f"Detection FPS: {fps2:.1f}")
-        
-        if len(tracks2) > 0:
-            frame2 = annotate(
-                tracks2, 
-                frame2, 
-                resized_frame2,
-                frame_width2,
-                frame_height2,
-                COLORS
-            )
-        
-        cv2.putText(
-            frame2,
-            f"FPS: {fps2:.1f}",
-            (int(20), int(40)),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1,
-            color=(0, 0, 255),
-            thickness=2,
-            lineType=cv2.LINE_AA
-        )
         out2.write(frame2)
-        cv2.imshow("Video 2 Output", frame2)
+        if not args.no_show:
+            cv2.imshow("Video 2 Output", frame2)
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    if not args.no_show and cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 cap1.release()

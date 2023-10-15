@@ -1,11 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-from pathlib import Path
-from PIL import Image
-import settings
-import helper
-import cv2
-import base64
-from io import BytesIO
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
@@ -20,10 +13,6 @@ def index():
 @app.route('/about.html')
 def about():
     return render_template('about.html')
-
-@app.route('/analytics.html')
-def end():
-    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

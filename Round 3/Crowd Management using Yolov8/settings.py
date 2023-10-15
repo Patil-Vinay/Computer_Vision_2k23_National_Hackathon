@@ -12,7 +12,10 @@ if root_path not in sys.path:
     sys.path.append(str(root_path))
 
 # Get the relative path of the root directory with respect to the current working directory
-ROOT = root_path.relative_to(Path.cwd())
+try:
+    ROOT = root_path.relative_to(Path.cwd())
+except ValueError:
+    ROOT = root_path
 
 # Sources
 IMAGE = 'Image'
@@ -42,6 +45,5 @@ MODEL_DIR = ROOT / 'weights'
 DETECTION_MODEL = MODEL_DIR / 'yolov8n.pt'
 SEGMENTATION_MODEL = MODEL_DIR / 'yolov8n-seg.pt'
 
-# Webcam
-WEBCAM_1_PATH = 0
-WEBCAM_2_PATH = 2
+# Person count log, read by crowd_analytics.py
+CSV_FILE = ROOT / 'count_data.csv'

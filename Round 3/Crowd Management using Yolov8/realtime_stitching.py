@@ -1,4 +1,4 @@
-    # import the necessary packages
+# import the necessary packages
 from __future__ import print_function
 from pyimagesearch.basicmotiondetector import BasicMotionDetector
 from pyimagesearch.panorama import Stitcher
@@ -14,7 +14,7 @@ leftStream = VideoStream(src=0).start()
 rightStream = VideoStream(src=1).start()
 time.sleep(2.0)
 
-# initialize the image stitcher, motion detector, and total
+# initialize the image stitcher, motion detector and total
 # number of frames read
 stitcher = Stitcher()
 motion = BasicMotionDetector(minArea=500)
@@ -33,7 +33,7 @@ while True:
 	# depending on how your cameras are oriented; frames
 	# should be supplied in left-to-right order
 	result = stitcher.stitch([left, right])
-	# no homograpy could be computed
+	# no homography could be computed
 	if result is None:
 		print("[INFO] homography could not be computed")
 		break
@@ -42,31 +42,12 @@ while True:
 	gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
 	locs = motion.update(gray)
-	
-    # loop over frames from the video streams
-while True:
-	# grab the frames from their respective video streams
-	left = leftStream.read()
-	right = rightStream.read()
-	# resize the frames
-	left = imutils.resize(left, width=400)
-	right = imutils.resize(right, width=400)
-	# stitch the frames together to form the panorama
-	# IMPORTANT: you might have to change this line of code
-	# depending on how your cameras are oriented; frames
-	# should be supplied in left-to-right order
-	result = stitcher.stitch([left, right])
-	# no homograpy could be computed
-	if result is None:
-		print("[INFO] homography could not be computed")
-		break
-	# convert the panorama to grayscale, blur it slightly, update
-	# the motion detector
-	gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-	gray = cv2.GaussianBlur(gray, (21, 21), 0)
-	locs = motion.update(gray)
-	
-    # increment the total number of frames read and draw the 
+	# draw a box around each moving area
+	for c in locs:
+		(x, y, w, h) = cv2.boundingRect(c)
+		cv2.rectangle(result, (x, y), (x + w, y + h), (0, 0, 255), 1)
+
+	# increment the total number of frames read and draw the
 	# timestamp on the image
 	total += 1
 	timestamp = datetime.datetime.now()

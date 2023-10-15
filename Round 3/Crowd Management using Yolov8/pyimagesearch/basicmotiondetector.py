@@ -4,8 +4,8 @@ import cv2
 class BasicMotionDetector:
 	def __init__(self, accumWeight=0.5, deltaThresh=5, minArea=5000):
 		# determine the OpenCV version, followed by storing the
-		# the frame accumulation weight, the fixed threshold for
-		# the delta image, and finally the minimum area required
+		# frame accumulation weight, the fixed threshold for
+		# the delta image and finally the minimum area required
 		# for "motion" to be reported
 		self.isv2 = imutils.is_cv2()
 		self.accumWeight = accumWeight
@@ -14,7 +14,7 @@ class BasicMotionDetector:
 		# initialize the average image for motion detection
 		self.avg = None
 
-def update(self, image):
+	def update(self, image):
 		# initialize the list of locations containing motion
 		locs = []
 		# if the average image is None, initialize it

@@ -30,23 +30,8 @@ def convert_detections(detections, threshold, classes):
     return final_boxes
 
 # Function for bounding box and ID annotation.
+# Track boxes are in resized frame coords so they get scaled back here.
 def annotate(tracks, frame, resized_frame, frame_width, frame_height, colors):
-
-    """
-    Annotate the given frame with the given tracks.
-
-    Args:
-        tracks: A list of DeepSort tracks.
-        frame: The frame to annotate.
-        resized_frame: The resized frame.
-        frame_width: The width of the frame.
-        frame_height: The height of the frame.
-        colors: A list of colors to use for the bounding boxes.
-
-    Returns:
-        The annotated frame.
-    """
-
     if len(tracks) > 0:
         for track in tracks:
             if not track.is_confirmed():

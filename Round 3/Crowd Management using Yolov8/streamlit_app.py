@@ -1,6 +1,6 @@
 # Python In-built packages
 from pathlib import Path
-import PIL
+from PIL import Image
 
 import webbrowser  # Import the webbrowser module
 # External packages
@@ -66,6 +66,9 @@ try:
 except Exception as ex:
     st.error(f"Unable to load model. Check the specified path: {model_path}")
     st.error(ex)
+    st.stop()
+
+csv_file = settings.CSV_FILE
 
 st.sidebar.header("Image/Video Config")
 source_radio = st.sidebar.radio(
@@ -74,7 +77,6 @@ source_radio = st.sidebar.radio(
 source_img = None
 # If image is selected
 if source_radio == settings.IMAGE:
-    count = 0
     source_img = st.sidebar.file_uploader(
         "Choose an image...", type=("jpg", "jpeg", "png", 'bmp', 'webp'))
 
@@ -84,11 +86,10 @@ if source_radio == settings.IMAGE:
         try:
             if source_img is None:
                 default_image_path = str(settings.DEFAULT_IMAGE)
-                default_image = PIL.Image.open(default_image_path)
                 st.image(default_image_path, caption="Default Image",
                          use_column_width=True)
             else:
-                uploaded_image = PIL.Image.open(source_img)
+                uploaded_image = Image.open(source_img)
                 st.image(source_img, caption="Uploaded Image",
                          use_column_width=True)
         except Exception as ex:
@@ -98,8 +99,6 @@ if source_radio == settings.IMAGE:
     with col2:
         if source_img is None:
             default_detected_image_path = str(settings.DEFAULT_DETECT_IMAGE)
-            default_detected_image = PIL.Image.open(
-                default_detected_image_path)
             st.image(default_detected_image_path, caption='Detected Image',
                      use_column_width=True)
         else:
@@ -111,39 +110,26 @@ if source_radio == settings.IMAGE:
                 res_plotted = res[0].plot()[:, :, ::-1]
                 st.image(res_plotted, caption='Detected Image',
                          use_column_width=True)
-                try:
-                    with st.expander("Detection Results"):
-                        for box in boxes:
-                            st.write(box.data)
-                    
-                    # Calculate the count once outside the loop
-                    count = len(boxes)
-                    
-                    with st.expander("Number of people"):
-                        st.write(count)
-                        
-                    # Check if count exceeds the threshold (e.g., 5)
-                    if count > crowd_threshold:
-                        st.warning(f"🚨 Alert: Crowd size exceeds the set threshold ({crowd_threshold*100}%) members 🚨")
-                    else:
-                        st.success("✅ Crowd is under control! ✅")
-                except Exception as ex:
-                    st.write("-")
+                with st.expander("Detection Results"):
+                    for box in boxes:
+                        st.write(box.data)
+
+                # only count the person class
+                count = sum(1 for c in boxes.cls.tolist() if res[0].names[int(c)] == "person")
+
+                with st.expander("Number of people"):
+                    st.write(count)
+
+                if count > crowd_threshold:
+                    st.warning(f"🚨 Alert: Crowd size exceeds the set threshold ({int(crowd_threshold)}) members 🚨")
+                else:
+                    st.success("✅ Crowd is under control! ✅")
 
 elif source_radio == settings.VIDEO:
-    helper.play_stored_video(confidence, model,crowd_threshold)
-    
+    helper.play_stored_video(confidence, model, crowd_threshold, csv_file)
 
 elif source_radio == settings.WEBCAM:
-    # helper.check_camera_indices(cam_threshold)
-    csv_file = 'count_data.csv'  # Replace with your desired CSV file path
-    helper.play_webcam(confidence, model, cam_threshold, crowd_threshold, csv_file)
-
-# elif source_radio == settings.RTSP:
-#     helper.play_rtsp_stream(confidence, model)
-
-# elif source_radio == settings.YOUTUBE:
-#     helper.play_youtube_video(confidence, model)
+    helper.play_webcam(confidence, model_path, cam_threshold, crowd_threshold, csv_file)
 
 else:
     st.error("Please select a valid source type!")

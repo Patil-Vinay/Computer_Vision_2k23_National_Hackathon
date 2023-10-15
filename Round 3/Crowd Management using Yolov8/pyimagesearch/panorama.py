@@ -70,18 +70,18 @@ class Stitcher:
             # other (i.e. Lowe's ratio test)
             if len(m) == 2 and m[0].distance < m[1].distance * ratio:
                 matches.append((m[0].trainIdx, m[0].queryIdx))
-                		# computing a homography requires at least 4 matches
-                if len(matches) > 4:
-                    # construct the two sets of points
-                    ptsA = np.float32([kpsA[i] for (_, i) in matches])
-                    ptsB = np.float32([kpsB[i] for (i, _) in matches])
-                    # compute the homography between the two sets of points
-                    (H, status) = cv2.findHomography(ptsA, ptsB, cv2.RANSAC,
-                        reprojThresh)
-                    # return the matches along with the homograpy matrix
-                    # and status of each matched point
-                    return (matches, H, status)
-                # otherwise, no homograpy could be computed
+        # computing a homography requires at least 4 matches
+        if len(matches) > 4:
+            # construct the two sets of points
+            ptsA = np.float32([kpsA[i] for (_, i) in matches])
+            ptsB = np.float32([kpsB[i] for (i, _) in matches])
+            # compute the homography between the two sets of points
+            (H, status) = cv2.findHomography(ptsA, ptsB, cv2.RANSAC,
+                reprojThresh)
+            # return the matches along with the homograpy matrix
+            # and status of each matched point
+            return (matches, H, status)
+        # otherwise, no homograpy could be computed
         return None
 
     def drawMatches(self, imageA, imageB, kpsA, kpsB, matches, status):
