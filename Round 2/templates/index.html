@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Tumour Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Brain Tumour Detection</h1>
+        <p>Upload a brain MRI scan to check it for glioma, meningioma or pituitary tumours.</p>
+    </header>
+
+    <main>
+        <form method="POST" enctype="multipart/form-data" class="card">
+            <input type="file" name="image" accept=".jpg,.jpeg,.png,.bmp" required>
+            <button type="submit">Check scan</button>
+        </form>
+
+        {% if error %}
+        <div class="alert error">{{ error }}</div>
+        {% endif %}
+
+        {% if label %}
+        {% if tumour %}
+        <div class="alert danger">Tumour detected: <b>{{ label }}</b> ({{ '%.1f' % confidence }}%)</div>
+        {% else %}
+        <div class="alert ok">No tumour detected ({{ '%.1f' % confidence }}%)</div>
+        {% endif %}
+
+        <div class="results">
+            <div class="card">
+                <h3>Uploaded scan</h3>
+                <img src="{{ url_for('static', filename=image) }}" alt="MRI scan">
+            </div>
+            {% if heatmap %}
+            <div class="card">
+                <h3>Region the model looked at</h3>
+                <img src="{{ url_for('static', filename=heatmap) }}" alt="Grad-CAM heatmap">
+            </div>
+            {% endif %}
+            <div class="card">
+                <h3>Class scores</h3>
+                {% for name, score in scores %}
+                <div class="score">
+                    <span>{{ name }}</span>
+                    <div class="bar"><div style="width: {{ '%.1f' % score }}%"></div></div>
+                    <span>{{ '%.1f' % score }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <p class="note">This is a hackathon project and not a medical tool. Always confirm with a doctor.</p>
+    </main>
+
+    <footer>
+        <p>Team Pixel Pioneers &copy; 2023</p>
+    </footer>
+</body>
+</html>

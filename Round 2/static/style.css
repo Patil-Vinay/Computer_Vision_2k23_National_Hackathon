@@ -1,0 +1,121 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f2f4f8;
+    color: #222;
+}
+
+header {
+    background: #1f3c88;
+    color: white;
+    padding: 24px 16px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0 0 8px;
+}
+
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 16px;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+form.card {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+button {
+    background: #1f3c88;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #16306e;
+}
+
+.alert {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 6px;
+}
+
+.alert.danger {
+    background: #fde2e1;
+    color: #a1201b;
+}
+
+.alert.ok {
+    background: #dff5e3;
+    color: #1d6b30;
+}
+
+.alert.error {
+    background: #fff4d6;
+    color: #7a5a00;
+}
+
+.results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.results h3 {
+    margin-top: 0;
+}
+
+.results img {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.score {
+    display: grid;
+    grid-template-columns: 140px 1fr 50px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.bar {
+    background: #e4e7ee;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.bar div {
+    background: #1f3c88;
+    height: 100%;
+}
+
+.note {
+    margin-top: 24px;
+    font-size: 13px;
+    color: #666;
+}
+
+footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 13px;
+    color: #666;
+}

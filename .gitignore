@@ -3,6 +3,10 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 
+# trained model from the notebook, too big for the repo
+*.h5
+
 # files written while the apps run
+Round 2/static/uploads/
 Round 3/REID/outputs/
 runs/
